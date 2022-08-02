@@ -254,28 +254,16 @@ if [ "$8" = "-turbo" ] || [ "$8" = "-t" ]; then set -- "${@:1:7}" "${@:9}"; expo
 if [ "$9" = "-turbo" ] || [ "$9" = "-t" ]; then set -- "${@:1:8}"; export tagui_turbo_mode=true; fi
 
 chrome_proxy_configuration=""
-chrome_http_proxy_configuration=""
-if [ -n "${http_proxy}" ]; then
-  chrome_http_proxy_configuration="http=${http_proxy}"
-  chrome_proxy_configuration=$(printf "%s%s;" $chrome_proxy_configuration $chrome_http_proxy_configuration)
-fi
-
 chrome_https_proxy_configuration=""
 if [ -n "${https_proxy}" ]; then
-  chrome_https_proxy_configuration="https=${https_proxy}"
-  chrome_proxy_configuration=$(printf "%s%s;" $chrome_proxy_configuration $chrome_https_proxy_configuration)
-fi
-
-chrome_socks_proxy_configuration=""
-if [ -n "${socks_proxy}" ]; then
-  chrome_socks_proxy_configuration="socks=${socks_proxy}"
-  chrome_proxy_configuration=$(printf "%s%s;" $chrome_proxy_configuration $chrome_socks_proxy_configuration)
+  chrome_https_proxy_configuration="${https_proxy}"
+  chrome_proxy_configuration=$(printf "%s%s" $chrome_proxy_configuration $chrome_https_proxy_configuration)
 fi
 
 if [[ -z "$chrome_proxy_configuration" ]]; then
   chrome_proxy_configuration=""
 else
-  chrome_proxy_configuration=$(printf "%sproxy-server=\"%s\"" "--" $chrome_proxy_configuration)
+  chrome_proxy_configuration=$(printf "%sproxy-server=%s" "--" $chrome_proxy_configuration)
 fi
 
 # concatenate parameters in order to fix issue when calling casperjs test
@@ -414,7 +402,7 @@ echo "ERROR - cannot find \"$chrome_command\" command on your Linux to launch we
 echo "update chrome_command setting in tagui/src/tagui and make sure symlink is created"; exit 1; fi
 chrome_process_id="$(ps x | grep remote-debugging-port=9222 | grep tagui_user_profile | grep window-size | sed -e 's/^[ ]*//' | cut -d' ' -f 1 | sort -nur | head -n 1)"
 if [ -n "$chrome_process_id" ]; then kill $chrome_process_id; fi
-$chrome_command $chrome_proxy_configuration --user-data-dir="$TAGUI_DIR/chrome/tagui_user_profile" $chrome_switches $window_size $headless_switch $no_sandbox_switch > /dev/null 2>&1 &
+$chrome_command "$chrome_proxy_configuration" --user-data-dir="$TAGUI_DIR/chrome/tagui_user_profile" $chrome_switches $window_size $headless_switch $no_sandbox_switch > /dev/null 2>&1 &
 fi
 
 # wait until chrome is ready with websocket url for php thread
